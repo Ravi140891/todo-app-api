@@ -4,8 +4,14 @@ const UserController = require("./controllers/users");
 const { joi } = require("./db");
 const Joi = joi;
 
+const signupValidator = joi.object({
+  name: joi.string().required(),
+  email: joi.string().required(),
+  password: joi.string().required(),
+});
+
 const validator = joi.object({
-  username: joi.string().required(),
+  email: joi.string().required(),
   password: joi.string().required(),
 });
 
@@ -16,7 +22,7 @@ const routes = [
     handler: UserController.create,
     options: {
       validate: {
-        payload: validator,
+        payload: signupValidator,
       },
       auth: false,
     },

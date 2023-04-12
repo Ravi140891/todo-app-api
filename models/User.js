@@ -8,11 +8,12 @@ class User extends Model {
   static get jsonSchema() {
     return {
       type: "object",
-      required: ["username", "password"],
+      required: ["name", "email", "password"],
 
       properties: {
         id: { type: "integer" },
-        username: { type: "string", minLength: 1, maxLength: 255 },
+        name: { type: "string", minLength: 1, maxLength: 255 },
+        email: { type: "string", minLength: 1, maxLength: 255 },
         password: { type: "string", minLength: 1, maxLength: 255 },
       },
     };

@@ -1,16 +1,18 @@
 const Boom = require("boom");
 const { knex } = require("../db");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+const saltRounds = 10;
 
 const User = require("../models/User");
 
 const UserController = {
   async create(request, h) {
-    const { username, password } = request.payload;
+    const { name, email, password } = request.payload;
 
     try {
-      await User.query(knex).insert({ username, password });
-
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+      await User.query(knex).insert({ name, email, password: hashedPassword });
       return { message: "User created successfully" };
     } catch (error) {
       throw Boom.badRequest(error.message);
@@ -18,18 +20,23 @@ const UserController = {
   },
 
   async login(request, h) {
-    const { username, password } = request.payload;
+    const { email, password } = request.payload;
 
     try {
-      const user = await User.query().findOne({ username });
+      const user = await User.query().findOne({ email });
 
-      if (!user || user.password !== password) {
+      if (!user) {
+        throw Boom.unauthorized("Invalid username or password");
+      }
+
+      const isPasswordMatched = await bcrypt.compare(password, user.password);
+      if (!isPasswordMatched) {
         throw Boom.unauthorized("Invalid username or password");
       }
 
       const userId = user.id;
       const token = jwt.sign({ userId }, process.env.JWT_SECRET, {
-        expiresIn: "4000000s",
+        expiresIn: "4d",
       });
 
       return { token };
@@ -38,8 +45,8 @@ const UserController = {
     }
   },
 
-  async findByUsername(username) {
-    const user = await User.query(knex).findOne({ username });
+  async findByUsername(email) {
+    const user = await User.query(knex).findOne({ email });
     return user;
   },
 };
